@@ -1,15 +1,9 @@
----
-title: "Lung Cancer"
-output: rmarkdown::github_document
----
+Lung Cancer
+================
 
-```{r setup, include=FALSE}
-knitr::opts_chunk$set(echo = TRUE)
-```
+\#\#Updating Libraries
 
-
-##Updating Libraries
-```{r echo=T, results='hide',message=FALSE,warning=FALSE}
+``` r
 library(rio)
 library(formattable)
 library(dplyr)
@@ -32,5 +26,3 @@ library("ggridges")
 library("hrbrthemes")
 options(scipen = 999)
 ```
-
-
