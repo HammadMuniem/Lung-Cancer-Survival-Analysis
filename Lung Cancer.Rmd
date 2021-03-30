@@ -8,7 +8,7 @@ knitr::opts_chunk$set(echo = TRUE)
 ```
 
 
-##Updating Libraries
+### Updating Libraries
 ```{r echo=T, results='hide',message=FALSE,warning=FALSE}
 library(rio)
 library(formattable)
@@ -28,9 +28,108 @@ library(lubridate)
 library(lattice)
 library(lme4)
 library(MuMIn)
-library("ggridges")
-library("hrbrthemes")
+library(ggridges)
+library(hrbrthemes)
+library(survival)
+library(survminer)
 options(scipen = 999)
+```
+
+### Importing Data Set
+```{r}
+df<-read_xlsx("Lung Cancer.xlsx",sheet = "Data")
+str(df)
+```
+
+##Converting to factor and releveling
+```{r}
+df$Treatment<-as.factor(df$Treatment)
+
+df$CellType<-as.factor(df$CellType)
+
+#df$Status<-as.factor(df$Status)
+
+df$Chemo<-as.factor(df$Chemo)
+df$Chemo <- recode_factor(df$Chemo, "0" = "No", "10" = "Yes")
+
+summary(df)
+```
+
+
+```{r}
+ggplot(df, aes(x=KarnofskyScore))+
+  geom_density(color="darkblue", fill="lightblue")
+
+ggplot(df, aes(x=DiagnosisMonths))+
+  geom_density(color="darkgreen", fill="lightgreen")
+
+ggplot(df, aes(x=log(KarnofskyScore)))+
+  geom_density(color="Red3", fill="Coral")
+
+ggplot(df, aes(x=Age))+
+  geom_density(color="darkgreen", fill="lightgreen")
+
+ggplot(df, aes(x=log(Age)))+
+  geom_density(color="darkblue", fill="lightblue")
+
+ggplot(df, aes(x=Survival))+
+  geom_density(color="Red3", fill="Coral")
+
+ggplot(df, aes(x=log(Survival)))+
+  geom_density(color="Red3", fill="Coral")
+```
+
+
+```{r}
+y<-Surv(df$Survival,df$Status)
+reg1<-survfit(formula=y~CellType,data=df)
+reg1
+summary(reg1)
+```
+
+
+```{r}
+#df$Status<-as.numeric(df$Status)
+ggsurvplot(fit= reg1, data=df, 
+          pval = FALSE, conf.int = FALSE,
+          #risk.table = TRUE, # Add risk table
+          #risk.table.col = "strata", # Change risk table color by groups
+          linetype = "strata", # Change line type by groups
+          surv.median.line = "hv", # Specify median survival
+          ggtheme = theme_bw(), # Change ggplot2 theme
+          palette = c("#E7B800", "#2E9FDF","Red3","Coral"))
+```
+
+
+```{r}
+reg2<-survfit(formula=y~Treatment,data=df)
+```
+
+
+```{r}
+ggsurvplot(fit= reg2, data=df, 
+          pval = FALSE, conf.int = FALSE,
+          #risk.table = TRUE, # Add risk table
+          #risk.table.col = "strata", # Change risk table color by groups
+          linetype = "strata", # Change line type by groups
+          surv.median.line = "hv", # Specify median survival
+          ggtheme = theme_bw(), # Change ggplot2 theme
+          palette = c("#2E9FDF","Red3"))
+```
+
+
+```{r}
+
+```
+
+
+```{r}
+
+```
+
+
+```{r}
+
 ```
 
 
