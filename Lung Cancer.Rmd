@@ -51,35 +51,38 @@ df$CellType<-as.factor(df$CellType)
 
 df$Chemo<-as.factor(df$Chemo)
 df$Chemo <- recode_factor(df$Chemo, "0" = "No", "10" = "Yes")
+df$Treatment <- recode_factor(df$Treatment, "1" = "Standard", "2" = "New Drug")
+df$CellType <- recode_factor(df$CellType, "1" = "Squamous", "2" = "Small Cell", "3" = "Adeno", "4" = "Large")
+df$logDiagnosisMonths<-log(df$DiagnosisMonths)
 
 summary(df)
 ```
 
-
+## Checking distributions
 ```{r}
 ggplot(df, aes(x=KarnofskyScore))+
   geom_density(color="darkblue", fill="lightblue")
 
 ggplot(df, aes(x=DiagnosisMonths))+
-  geom_density(color="darkgreen", fill="lightgreen")
+  geom_density(color="darkblue", fill="lightblue")
 
 ggplot(df, aes(x=log(KarnofskyScore)))+
-  geom_density(color="Red3", fill="Coral")
+  geom_density(color="darkblue", fill="lightblue")
 
 ggplot(df, aes(x=Age))+
-  geom_density(color="darkgreen", fill="lightgreen")
+  geom_density(color="darkblue", fill="lightblue")
 
 ggplot(df, aes(x=log(Age)))+
   geom_density(color="darkblue", fill="lightblue")
 
 ggplot(df, aes(x=Survival))+
-  geom_density(color="Red3", fill="Coral")
+  geom_density(color="darkblue", fill="lightblue")
 
 ggplot(df, aes(x=log(Survival)))+
-  geom_density(color="Red3", fill="Coral")
+  geom_density(color="darkblue", fill="lightblue")
 ```
 
-
+## Running non-parametric model- Cell type
 ```{r}
 y<-Surv(df$Survival,df$Status)
 reg1<-survfit(formula=y~CellType,data=df)
@@ -100,9 +103,10 @@ ggsurvplot(fit= reg1, data=df,
           palette = c("#E7B800", "#2E9FDF","Red3","Coral"))
 ```
 
-
+## Running non-parametric model- Treatment
 ```{r}
 reg2<-survfit(formula=y~Treatment,data=df)
+summary(reg2)
 ```
 
 
@@ -114,22 +118,81 @@ ggsurvplot(fit= reg2, data=df,
           linetype = "strata", # Change line type by groups
           surv.median.line = "hv", # Specify median survival
           ggtheme = theme_bw(), # Change ggplot2 theme
-          palette = c("#2E9FDF","Red3"))
+          palette = c("#2E9FDF","Red3"),
+          xlab="Time in days",title="Kaplan-Meier Curve for Lung Cancer Survival",
+          legend.labs=c("Standard Treatment", "New Drug"), 
+          legend.title="Treatment Type")
+```
+
+## Checking probablity to survive 6 months and a year
+```{r}
+summary(reg2,times = 365)
+summary(reg2,times = 183)
 ```
 
 
 ```{r}
-
+summary(reg2)$table
 ```
 
+## Semi-parametric model - With Chemo
+```{r}
+reg3<-coxph(y~Treatment+CellType+Age+KarnofskyScore+DiagnosisMonths+Chemo,data=df)
+summary(reg3)
+```
+
+## Model without Chemo
+```{r}
+reg5<-coxph(y~Treatment+CellType+Age+KarnofskyScore+DiagnosisMonths,data=df)
+summary(reg5)
+
+anova(reg3,reg5)
+```
+
+## Model without Karnofsky score
+```{r}
+reg6<-coxph(y~Treatment+CellType+Age+DiagnosisMonths,data=df)
+summary(reg6)
+
+anova(reg5,reg6)
+```
+
+## Assessing Propotional Hazards
+```{r}
+zph<-cox.zph(reg5)
+zph
+plot(zph)
+```
 
 ```{r}
-
+reg7<-coxph(y~Treatment+Age+DiagnosisMonths,data=df)
 ```
 
+## Parametric Models
+### Exponential Model
+```{r}
+exp<-survreg(y~Treatment+Age+DiagnosisMonths,data=df,dist = "exponential")
+summary(exp)
+```
+
+### Weibull Model
+```{r}
+weibull<-survreg(y~Treatment+Age+DiagnosisMonths,data=df,dist = "weibull")
+summary(weibull)
+```
+
+### LogLogistic Model
+```{r}
+LogLogistic<-survreg(y~Treatment+Age+DiagnosisMonths,data=df,dist = "loglogistic")
+summary(LogLogistic)
+summary(reg7)
+```
 
 ```{r}
-
+stargazer(reg7,exp,weibull,type = "text",align = TRUE,single.row=TRUE,digits=2,out = "reg.txt")
+stargazer(reg7,exp,weibull,LogLogistic,type = "text",align = TRUE,single.row=TRUE,digits=2,out = "reg2.txt")
 ```
+
+
 
 
